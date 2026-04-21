@@ -10,7 +10,7 @@ const route = useRoute();
 const router = useRouter();
 const mesStore = useMesStore();
 
-const { user, currentTime, sidebarCollapsed, accessibleModules, shellStats } = storeToRefs(mesStore);
+const { user, currentTime, sidebarCollapsed, accessibleModules, shellStats, dataState } = storeToRefs(mesStore);
 
 const currentItem = computed(() => {
   return mesStore.getRouteItem(route.name) || mesStore.getRouteItem(mesStore.defaultRouteName);
@@ -30,6 +30,48 @@ const pageSubtitle = computed(() => {
   }
 
   return `${currentItem.value.section} / ${currentItem.value.description}`;
+});
+
+const notificationItems = computed(() => {
+  const pendingApprovals = (dataState.value.approvals || [])
+    .filter((item) => !String(item.status || "").includes("已"))
+    .slice(0, 2)
+    .map((item) => ({
+      id: `approval-${item.id}`,
+      category: "审批待办",
+      title: item.title,
+      detail: `${item.applicant} · ${item.time}`,
+      routeName: "approval"
+    }));
+
+  const activeExceptions = (dataState.value.exceptions || [])
+    .filter((item) => !String(item.status || "").includes("已"))
+    .slice(0, 2)
+    .map((item) => ({
+      id: `exception-${item.id}`,
+      category: "异常提醒",
+      title: item.type,
+      detail: `${item.station} · ${item.time}`,
+      routeName: "dashboard"
+    }));
+
+  const alarmEquipment = (dataState.value.equipment || [])
+    .filter((item) => Number(item.alarm || 0) > 0)
+    .slice(0, 2)
+    .map((item) => ({
+      id: `equipment-${item.id}`,
+      category: "设备告警",
+      title: item.name,
+      detail: `${item.area} · 告警 ${item.alarm} 条`,
+      routeName: "equipment"
+    }));
+
+  return [...pendingApprovals, ...activeExceptions, ...alarmEquipment];
+});
+
+const notificationCount = computed(() => {
+  const pendingApprovals = (dataState.value.approvals || []).filter((item) => !String(item.status || "").includes("已")).length;
+  return pendingApprovals + shellStats.value.pendingExceptionsCount + shellStats.value.equipmentAlarmCount;
 });
 
 function navigate(routeName) {
@@ -62,7 +104,10 @@ async function handleLogout() {
         :subtitle="pageSubtitle"
         :current-time="currentTime"
         :user="user"
+        :notification-count="notificationCount"
+        :notifications="notificationItems"
         @toggle-sidebar="mesStore.toggleSidebar"
+        @navigate="navigate"
         @logout="handleLogout"
       />
 

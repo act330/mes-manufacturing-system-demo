@@ -1,4 +1,6 @@
 <script setup>
+import { ref } from "vue";
+
 defineProps({
   form: {
     type: Object,
@@ -23,6 +25,28 @@ defineProps({
 });
 
 const emit = defineEmits(["submit", "toggle-password", "fill-demo"]);
+
+const passwordHelpVisible = ref(false);
+
+const demoAccounts = [
+  "admin / 123456 / FAC-001",
+  "planner / 123456 / FAC-002",
+  "quality / 123456 / FAC-003",
+  "operator / 123456 / FAC-001"
+];
+
+function openPasswordHelp() {
+  passwordHelpVisible.value = true;
+}
+
+function closePasswordHelp() {
+  passwordHelpVisible.value = false;
+}
+
+function fillDemoAndClose() {
+  emit("fill-demo");
+  closePasswordHelp();
+}
 </script>
 
 <template>
@@ -143,11 +167,11 @@ const emit = defineEmits(["submit", "toggle-password", "fill-demo"]);
                 <input v-model="form.remember" type="checkbox" />
                 记住密码
               </label>
-              <a class="text-link" href="javascript:void(0)">忘记密码</a>
+              <button class="text-link text-link-button" type="button" @click="openPasswordHelp">忘记密码</button>
             </div>
 
             <button class="btn btn-primary btn-block" type="submit" :disabled="loading">
-              {{ loading ? "登录中..." : "登 录" }}
+              {{ loading ? "登录中..." : "登录" }}
             </button>
           </form>
 
@@ -161,6 +185,34 @@ const emit = defineEmits(["submit", "toggle-password", "fill-demo"]);
 
         <div class="auth-meta">
           © 2026 山东汉鑫科技股份有限公司提供技术支持 · MES Vue Engineering Version
+        </div>
+      </div>
+    </div>
+
+    <div v-if="passwordHelpVisible" class="login-help-overlay" @click.self="closePasswordHelp">
+      <div class="login-help-dialog" role="dialog" aria-modal="true">
+        <button class="login-help-close" type="button" @click="closePasswordHelp">×</button>
+        <p class="eyebrow">Password Recovery</p>
+        <h3>账号恢复指引</h3>
+        <p class="login-help-text">
+          当前演示站点未接入邮件或短信找回流程。你可以直接填充演示账号继续体验，或者在本地 API 模式下由管理员重置密码。
+        </p>
+
+        <div class="login-help-card">
+          <strong>可用演示账号</strong>
+          <ul class="login-help-list">
+            <li v-for="account in demoAccounts" :key="account">{{ account }}</li>
+          </ul>
+        </div>
+
+        <div class="login-help-card">
+          <strong>建议处理方式</strong>
+          <p>如果你只是查看页面效果，直接使用管理员演示账号即可；如果你在做真实业务接入，建议把找回密码改成邮件、短信或管理员审批流程。</p>
+        </div>
+
+        <div class="login-help-actions">
+          <button class="btn btn-secondary" type="button" @click="closePasswordHelp">关闭</button>
+          <button class="btn btn-primary" type="button" @click="fillDemoAndClose">填充管理员账号</button>
         </div>
       </div>
     </div>

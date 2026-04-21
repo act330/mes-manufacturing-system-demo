@@ -619,6 +619,11 @@ a {
   font-weight: 700;
 }
 
+.text-link-button {
+  padding: 0;
+  background: transparent;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -696,6 +701,78 @@ a {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.7;
+}
+
+.login-help-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(16, 28, 52, 0.52);
+  backdrop-filter: blur(8px);
+}
+
+.login-help-dialog {
+  position: relative;
+  width: min(560px, calc(100vw - 24px));
+  padding: 28px;
+  border-radius: 28px;
+  background: #ffffff;
+  box-shadow: 0 30px 80px rgba(9, 28, 67, 0.28);
+}
+
+.login-help-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  color: var(--muted);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.login-help-dialog h3 {
+  margin: 8px 0 10px;
+  font-size: 24px;
+}
+
+.login-help-text {
+  margin: 0 0 18px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.login-help-card {
+  margin-top: 14px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(47, 128, 255, 0.08);
+}
+
+.login-help-card strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.login-help-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.login-help-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text);
+  line-height: 1.8;
+}
+
+.login-help-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
 }
 
 .auth-meta {
@@ -1083,6 +1160,11 @@ a {
   background: #ffffff;
 }
 
+.icon-button--active {
+  background: #ffffff;
+  color: var(--brand);
+}
+
 .icon-button .bar,
 .icon-button .dot,
 .icon-button .bell {
@@ -1135,6 +1217,113 @@ a {
   height: 6px;
   border-radius: 50%;
   background: currentColor;
+}
+
+.notification-shell {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  background: linear-gradient(135deg, #ff7d59, #ff4d4f);
+  box-shadow: 0 8px 18px rgba(255, 77, 79, 0.26);
+}
+
+.notification-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 20;
+  width: min(380px, calc(100vw - 32px));
+  padding: 14px;
+  border: 1px solid rgba(91, 126, 180, 0.12);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 24px 56px rgba(10, 28, 64, 0.18);
+}
+
+.notification-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 4px 12px;
+}
+
+.notification-panel-head strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 16px;
+}
+
+.notification-panel-head span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.notification-close {
+  color: var(--muted);
+  font-size: 26px;
+  line-height: 1;
+}
+
+.notification-list {
+  display: grid;
+  gap: 10px;
+}
+
+.notification-item {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 18px;
+  text-align: left;
+  background: rgba(16, 39, 83, 0.04);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.notification-item:hover {
+  background: rgba(47, 128, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.notification-item-tag {
+  display: inline-flex;
+  justify-self: start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(47, 128, 255, 0.12);
+}
+
+.notification-item strong {
+  font-size: 14px;
+}
+
+.notification-item small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.notification-empty {
+  padding: 18px 14px;
+  border-radius: 18px;
+  color: var(--muted);
+  line-height: 1.7;
+  background: rgba(16, 39, 83, 0.04);
 }
 
 .page-title strong {
@@ -4145,6 +4334,18 @@ tbody tr:hover {
   .topbar-right {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .notification-panel {
+    width: min(100vw - 24px, 380px);
+  }
+
+  .login-help-dialog {
+    padding: 24px 18px;
+  }
+
+  .login-help-actions {
+    flex-direction: column-reverse;
   }
 
   .page-title strong {
