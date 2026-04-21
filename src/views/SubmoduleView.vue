@@ -2933,6 +2933,11 @@ function openDeleteConfirm(row) {
 }
 
 function submitModal() {
+  if (isModalReadonly.value) {
+    closeModal();
+    return;
+  }
+
   const requiredField = effectiveFormFields.value.find((field) => {
     if (!isFieldRequired(field)) {
       return false;
@@ -3166,6 +3171,16 @@ function handleRowAction(action, row) {
 
   if (action.key === "productDetail" && supportsBarcodeDetailDialog()) {
     openBarcodeDetailDialog("product", row);
+    return;
+  }
+
+  if (["view", "detail", "repairDetail", "ruleDetail", "productDetail", "templateDetail"].includes(action.key)) {
+    openModal("view", row);
+    return;
+  }
+
+  if (action.key === "modifyTemplate") {
+    openModal("edit", row);
     return;
   }
 
@@ -3436,6 +3451,7 @@ watch(
 const modalTitle = computed(() =>
   `${modalMode.value === "add" ? "新增" : "修改"}${pageConfig.value.modalEntity || pageConfig.value.title}`
 );
+const isModalReadonly = computed(() => modalMode.value === "view");
 const dictionaryEntryDialogTitle = computed(() =>
   `${dictionaryEntryDialog.mode === "add" ? "新增" : "修改"}字典`
 );
@@ -4069,6 +4085,7 @@ const dictionaryEntryDialogTitle = computed(() =>
                 v-model="modalForm[field.key]"
                 class="template-field"
                 :class="{ 'template-field--placeholder': !modalForm[field.key] }"
+                :disabled="isModalReadonly"
               >
                 <option v-for="option in field.options || []" :key="option.value" :value="option.value">
                   {{ option.label }}
@@ -4088,6 +4105,7 @@ const dictionaryEntryDialogTitle = computed(() =>
                 v-model="modalForm[field.key]"
                 class="template-field modal-textarea"
                 :placeholder="fieldPlaceholder(field)"
+                :readonly="isModalReadonly"
               ></textarea>
             </template>
             <template v-else-if="field.type === 'date'">
@@ -4096,6 +4114,7 @@ const dictionaryEntryDialogTitle = computed(() =>
                 class="template-field"
                 type="date"
                 :placeholder="fieldPlaceholder(field)"
+                :disabled="isModalReadonly"
               />
             </template>
             <template v-else-if="field.type === 'time'">
@@ -4104,6 +4123,7 @@ const dictionaryEntryDialogTitle = computed(() =>
                 class="template-field"
                 type="time"
                 :placeholder="fieldPlaceholder(field)"
+                :disabled="isModalReadonly"
               />
             </template>
             <template v-else>
@@ -4112,6 +4132,7 @@ const dictionaryEntryDialogTitle = computed(() =>
                 class="template-field"
                 :type="inputType(field)"
                 :placeholder="fieldPlaceholder(field)"
+                :readonly="isModalReadonly"
               />
             </template>
           </label>
@@ -4119,9 +4140,9 @@ const dictionaryEntryDialogTitle = computed(() =>
 
         <div class="modal-actions">
           <button class="btn btn-ghost" type="button" @click="closeModal">取消</button>
-          <button class="btn btn-primary" type="button" @click="submitModal">确定</button>
+          <button v-if="!isModalReadonly" class="btn btn-primary" type="button" @click="submitModal">确定</button>
         </div>
-        <label v-if="modalKeepOpenEnabled" class="dictionary-entry-keep-open modal-keep-open">
+        <label v-if="modalKeepOpenEnabled && !isModalReadonly" class="dictionary-entry-keep-open modal-keep-open">
           <input v-model="modalKeepOpen" type="checkbox" />
           <span>确定后不关闭</span>
         </label>
