@@ -9,6 +9,14 @@ import {
 import { defaultData } from "../data/default-data";
 import { apiClient, getApiErrorMessage } from "../services/api";
 import {
+  demoDecideApproval,
+  demoHydrateSession,
+  demoLogin,
+  demoSearchTrace,
+  demoToggleSetting,
+  isStaticDemoMode
+} from "../services/static-demo";
+import {
   STORAGE_KEYS,
   deepClone,
   filterWorkOrdersByStatus,
@@ -330,6 +338,18 @@ export const useMesStore = defineStore("mes", {
         return false;
       }
 
+      if (isStaticDemoMode()) {
+        const payload = demoHydrateSession(this.authToken, this.dataState);
+        if (!payload) {
+          this.lastAuthFailure = "expired";
+          this.clearAuthState({ silent: true });
+          return false;
+        }
+
+        this.applyAuthPayload(payload);
+        return true;
+      }
+
       try {
         const { data } = await apiClient.get("/auth/me", {
           skipAuthRedirect: true
@@ -347,6 +367,23 @@ export const useMesStore = defineStore("mes", {
       this.remember = this.loginForm.remember;
 
       try {
+        if (isStaticDemoMode()) {
+          const data = demoLogin({
+            username: this.loginForm.username,
+            password: this.loginForm.password,
+            factory: this.loginForm.factory
+          }, this.dataState);
+
+          if (!data) {
+            throw new Error("账号、密码或工厂不正确，请使用演示账号：admin / 123456 / FAC-001");
+          }
+
+          this.authToken = data.token;
+          this.applyAuthPayload(data);
+          this.setToast(`欢迎回来，${data.user.name}。当前为 GitHub Pages 静态演示模式。`);
+          return true;
+        }
+
         const { data } = await apiClient.post("/auth/login", {
           username: this.loginForm.username,
           password: this.loginForm.password,
@@ -372,6 +409,12 @@ export const useMesStore = defineStore("mes", {
       }
     },
     async logout() {
+      if (isStaticDemoMode()) {
+        this.clearAuthState({ silent: true });
+        this.setToast("已安全退出系统。");
+        return;
+      }
+
       try {
         await apiClient.post("/auth/logout", null, {
           skipAuthRedirect: true
@@ -383,6 +426,15 @@ export const useMesStore = defineStore("mes", {
       this.setToast("已安全退出系统。");
     },
     async submitTraceSearch() {
+      if (isStaticDemoMode()) {
+        const data = demoSearchTrace(this.dataState, this.traceQuery);
+        this.traceResult = data.item || null;
+        if (!data.item) {
+          this.setToast("没有查到对应履历，请确认 SN、批次号或工单号。");
+        }
+        return;
+      }
+
       try {
         const { data } = await apiClient.get("/traceability/search", {
           params: {
@@ -399,6 +451,18 @@ export const useMesStore = defineStore("mes", {
       }
     },
     async decideApproval(id, decision) {
+      if (isStaticDemoMode()) {
+        const data = demoDecideApproval(this.dataState, id, decision);
+        if (!data) {
+          this.setToast("审批单不存在。");
+          return;
+        }
+
+        this.dataState.approvals = data.items;
+        this.setToast(`${data.item.title}${decision === "approved" ? "已审批通过" : "已驳回"}。`);
+        return;
+      }
+
       try {
         const { data } = await apiClient.post(`/approvals/${id}/decision`, { decision });
         this.dataState.approvals = deepClone(data.items || this.dataState.approvals);
@@ -408,6 +472,18 @@ export const useMesStore = defineStore("mes", {
       }
     },
     async toggleSetting(key) {
+      if (isStaticDemoMode()) {
+        const data = demoToggleSetting(this.dataState, key);
+        if (!data) {
+          this.setToast("未找到对应设置项。");
+          return;
+        }
+
+        this.dataState.settings = data.items;
+        this.setToast(`${data.item.title}${data.item.enabled ? "已开启" : "已关闭"}。`);
+        return;
+      }
+
       try {
         const { data } = await apiClient.patch(`/settings/${key}/toggle`);
         this.dataState.settings = deepClone(data.items || this.dataState.settings);

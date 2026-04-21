@@ -1,8 +1,10 @@
 import axios from "axios";
 import { STORAGE_KEYS } from "../utils/mes-utils";
 
+const apiBaseURL = import.meta.env.VITE_API_BASE_URL || "/api";
+
 export const apiClient = axios.create({
-  baseURL: "/api",
+  baseURL: apiBaseURL,
   headers: {
     Accept: "application/json"
   }

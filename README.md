@@ -1,38 +1,70 @@
-# MES 制造执行系统工程化项目
+# MES 制造执行系统工程化演示项目
 
-这个项目已经从单页原型升级成标准工程结构：
+一个面向离散制造场景的 MES 前后端演示项目，覆盖登录认证、工单执行、质量追溯、审批协同、设备与库存看板等典型业务模块。
 
-- 前端：`Vue 3 + Vite + Vue Router + Pinia + Axios`
+项目当前同时提供两种运行方式：
+
+- 本地全栈模式：`Vue 3 + Vite` 前端，配合 `Node.js` API 使用
+- GitHub Pages 演示模式：自动构建为纯静态站点，使用前端内置的静态演示数据
+
+## 在线预览
+
+- GitHub Pages：`https://act330.github.io/mes-manufacturing-system-demo/`
+- 自动部署：推送到 `main` 分支后，GitHub Actions 会自动构建并发布 Pages
+
+说明：GitHub Pages 版本为静态演示模式，适合展示界面与交互流程；本地运行时可以连接仓库内的 Node API，体验完整登录态与接口流程。
+
+## 项目截图
+
+### 登录页
+
+![MES 登录页](docs/screenshots/login.jpg)
+
+### 首页看板
+
+![MES 首页看板](docs/screenshots/dashboard.jpg)
+
+### 履历追溯
+
+![MES 履历追溯](docs/screenshots/traceability.jpg)
+
+### 审批协同
+
+![MES 审批协同](docs/screenshots/approval.jpg)
+
+## 核心能力
+
+- 登录认证、登录态恢复、权限菜单过滤
+- 首页经营看板与核心生产指标展示
+- 生产配置、客户、工艺、条码、设备、仓储等业务视图
+- 工单执行进度、优先级、良率与状态追踪
+- 批次号、SN、工单号多维履历追溯
+- 审批流处理与系统开关配置
+- GitHub Pages 静态演示模式与本地全栈模式双运行形态
+
+## 技术栈
+
+- 前端：`Vue 3`、`Vite`、`Vue Router`、`Pinia`、`Axios`
 - 后端：`Node.js HTTP API`
-- 数据层：当前为本地种子数据 + 运行时 JSON 持久化
-- 数据库设计：提供完整 `MySQL` 建表与种子脚本
+- 数据：本地种子数据 + 运行时 JSON 持久化
+- 数据库设计：提供 `MySQL` 建表与种子脚本
+- 部署：`GitHub Actions` + `GitHub Pages`
 
 ## 目录结构
 
 ```text
 .
 ├─ src/                    前端源码
-│  ├─ App.vue
-│  ├─ main.js
-│  ├─ components/
-│  ├─ layouts/
-│  ├─ router/
-│  ├─ services/
-│  ├─ stores/
-│  ├─ views/
-│  └─ styles/
-├─ server/                 后端服务
-│  ├─ index.js
-│  ├─ backend/
-│  └─ data/                运行时数据
+├─ server/                 Node API 与运行时数据
 ├─ database/               MySQL 表结构与种子脚本
-├─ docs/                   API 与业务流程文档
-├─ index.html              Vite 入口页
-├─ vite.config.mjs         Vite 配置
+├─ docs/                   文档与项目截图
+├─ .github/workflows/      GitHub Actions 自动部署
+├─ index.html
+├─ vite.config.mjs
 └─ package.json
 ```
 
-## 开发方式
+## 本地启动
 
 安装依赖：
 
@@ -40,60 +72,28 @@
 npm install
 ```
 
-启动前后端开发环境：
+同时启动前端与后端：
 
 ```powershell
 npm run dev
 ```
 
-启动后：
+默认访问地址：
 
-- 前端开发地址：`http://localhost:5188`
-- 后端 API 地址：`http://localhost:3001`
-- 前端通过 Vite 代理访问 `/api`
+- 前端：`http://localhost:5188`
+- 后端：`http://localhost:3001`
 
-## 生产构建
-
-构建前端：
+生产构建：
 
 ```powershell
 npm run build
 ```
 
-构建产物输出到：
-
-```text
-dist/
-```
-
-启动生产服务：
+生产模式启动：
 
 ```powershell
 npm start
 ```
-
-启动后访问：
-
-```text
-http://localhost:3000
-```
-
-## 常用脚本
-
-- `npm run dev`
-  同时启动前端开发服务器和后端 API
-
-- `npm run build`
-  打包前端工程
-
-- `npm start`
-  启动生产服务并托管 `dist`
-
-- `npm run preview`
-  预览前端构建结果
-
-- `npm run check`
-  执行 Node 语法检查
 
 ## 演示账号
 
@@ -102,31 +102,20 @@ http://localhost:3000
 - `quality / 123456 / FAC-003`
 - `operator / 123456 / FAC-001`
 
-工厂代码对应：
+## GitHub Pages 部署说明
 
-- `FAC-001`：易蓝工厂
-- `FAC-002`：二号装配厂
-- `FAC-003`：质量中心
+仓库中已包含 [deploy-pages.yml](.github/workflows/deploy-pages.yml) 工作流，默认行为如下：
 
-## 当前保留的业务能力
+- 监听 `main` 分支推送
+- 使用 `npm ci` 安装依赖
+- 以仓库名作为 `base` 路径执行 Vite 构建
+- 开启 `VITE_STATIC_DEMO=true`，生成适合 Pages 的静态演示版本
+- 自动补充 `404.html` 以支持 Vue Router 刷新
+- 发布到 GitHub Pages
 
-- 登录认证与登录态恢复
-- 首页看板
-- 生产配置、客户、工艺、条码、设备、仓库等业务视图
-- 工单列表与状态筛选
-- 条码规则与条码签发接口
-- 履历追溯查询
-- 审批处理
-- 系统设置开关
-- 基于 Vue Router 的页面路由控制
-- 基于 Pinia 的全局状态管理
-- 基于 Axios 的统一 API 请求层
-- MySQL 表结构设计稿
+## 后续可扩展方向
 
-## 下一步建议
-
-1. 把 `server/backend/store.js` 替换成真实 MySQL DAO 层。
-2. 增加密码加密、JWT 或企业统一登录。
-3. 增加路由懒加载、权限菜单缓存、统一错误页和 401/403 拦截。
-4. 增加工单报工、过站、设备采集、异常闭环接口。
-5. 如你需要，我可以下一步继续把这个 Vue 版本补成 `Element Plus/Naive UI + Axios 拦截器 + 路由守卫 + Pinia 模块拆分` 的企业级前端架构。
+1. 将 `server/backend/store.js` 替换为真实 MySQL DAO 层
+2. 增加 JWT 刷新、统一鉴权中间件与更完整的审计日志
+3. 将演示数据逐步替换为真实 ERP、WMS、设备采集接口
+4. 增加工单报工、过站、异常闭环、设备保养等高频业务能力
