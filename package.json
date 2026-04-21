@@ -1,0 +1,27 @@
+{
+  "name": "mes-manufacturing-system-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MES manufacturing execution system engineered project with Vite frontend and Node backend",
+  "scripts": {
+    "dev": "concurrently \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:server": "node server/index.js 3001",
+    "dev:web": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "start": "node server/index.js 3000",
+    "check": "node --check server/index.js && node --check src/main.js && node --check server/backend/router.js && node --check server/backend/store.js && node --check server/backend/mes-seed.js"
+  },
+  "dependencies": {
+    "axios": "^1.8.4",
+    "pinia": "^3.0.3",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
+    "concurrently": "^9.2.1",
+    "vite": "^7.1.11"
+  }
+}
