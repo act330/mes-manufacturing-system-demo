@@ -278,6 +278,66 @@ CREATE TABLE IF NOT EXISTS `mes_barcode_serials` (
     FOREIGN KEY (`operator_id`) REFERENCES `mes_users` (`id`)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS `mes_printers` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `printer_code` VARCHAR(64) NOT NULL,
+  `printer_name` VARCHAR(128) NOT NULL,
+  `factory_id` BIGINT UNSIGNED DEFAULT NULL,
+  `ip_address` VARCHAR(128) DEFAULT NULL,
+  `driver_name` VARCHAR(128) DEFAULT NULL,
+  `status` ENUM('online', 'offline', 'warning') NOT NULL DEFAULT 'online',
+  `last_seen_at` DATETIME DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_mes_printers_code` (`printer_code`),
+  KEY `idx_mes_printers_factory_id` (`factory_id`),
+  CONSTRAINT `fk_mes_printers_factory_id`
+    FOREIGN KEY (`factory_id`) REFERENCES `mes_factories` (`id`)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `mes_print_jobs` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `job_code` VARCHAR(64) NOT NULL,
+  `rule_id` BIGINT UNSIGNED DEFAULT NULL,
+  `printer_id` BIGINT UNSIGNED DEFAULT NULL,
+  `source_mode` VARCHAR(32) NOT NULL DEFAULT 'payload',
+  `status` ENUM('queued', 'submitted', 'printed', 'failed', 'cancelled') NOT NULL DEFAULT 'queued',
+  `copies` INT NOT NULL DEFAULT 1,
+  `request_payload_json` JSON DEFAULT NULL,
+  `response_payload_json` JSON DEFAULT NULL,
+  `error_message` VARCHAR(500) DEFAULT NULL,
+  `operator_id` BIGINT UNSIGNED DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `completed_at` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_mes_print_jobs_code` (`job_code`),
+  KEY `idx_mes_print_jobs_rule_id` (`rule_id`),
+  KEY `idx_mes_print_jobs_printer_id` (`printer_id`),
+  KEY `idx_mes_print_jobs_status` (`status`),
+  CONSTRAINT `fk_mes_print_jobs_rule_id`
+    FOREIGN KEY (`rule_id`) REFERENCES `mes_barcode_rules` (`id`),
+  CONSTRAINT `fk_mes_print_jobs_printer_id`
+    FOREIGN KEY (`printer_id`) REFERENCES `mes_printers` (`id`),
+  CONSTRAINT `fk_mes_print_jobs_operator_id`
+    FOREIGN KEY (`operator_id`) REFERENCES `mes_users` (`id`)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `mes_print_job_items` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `job_id` BIGINT UNSIGNED NOT NULL,
+  `barcode_serial_id` BIGINT UNSIGNED DEFAULT NULL,
+  `barcode_value` VARCHAR(128) NOT NULL,
+  `copies` INT NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY `idx_mes_print_job_items_job_id` (`job_id`),
+  KEY `idx_mes_print_job_items_barcode_serial_id` (`barcode_serial_id`),
+  CONSTRAINT `fk_mes_print_job_items_job_id`
+    FOREIGN KEY (`job_id`) REFERENCES `mes_print_jobs` (`id`),
+  CONSTRAINT `fk_mes_print_job_items_barcode_serial_id`
+    FOREIGN KEY (`barcode_serial_id`) REFERENCES `mes_barcode_serials` (`id`)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS `mes_trace_records` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `trace_code` VARCHAR(128) NOT NULL,
@@ -385,6 +445,28 @@ CREATE TABLE IF NOT EXISTS `mes_inventory_items` (
     FOREIGN KEY (`factory_id`) REFERENCES `mes_factories` (`id`)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS `mes_inventory_transactions` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `transaction_code` VARCHAR(64) NOT NULL,
+  `material_code` VARCHAR(64) NOT NULL,
+  `factory_id` BIGINT UNSIGNED DEFAULT NULL,
+  `location_code` VARCHAR(64) DEFAULT NULL,
+  `direction` ENUM('inbound', 'outbound', 'adjust') NOT NULL DEFAULT 'inbound',
+  `qty` INT NOT NULL DEFAULT 0,
+  `ref_type` VARCHAR(64) DEFAULT NULL,
+  `ref_code` VARCHAR(64) DEFAULT NULL,
+  `source_doc_no` VARCHAR(64) DEFAULT NULL,
+  `source_system` VARCHAR(64) DEFAULT NULL,
+  `occurred_at` DATETIME NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_mes_inventory_transactions_code` (`transaction_code`),
+  KEY `idx_mes_inventory_transactions_material_code` (`material_code`),
+  KEY `idx_mes_inventory_transactions_factory_id` (`factory_id`),
+  CONSTRAINT `fk_mes_inventory_transactions_factory_id`
+    FOREIGN KEY (`factory_id`) REFERENCES `mes_factories` (`id`)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS `mes_approval_requests` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `approval_code` VARCHAR(64) NOT NULL,
@@ -437,4 +519,38 @@ CREATE TABLE IF NOT EXISTS `mes_audit_logs` (
   KEY `idx_mes_audit_logs_actor_id` (`actor_id`),
   CONSTRAINT `fk_mes_audit_logs_actor_id`
     FOREIGN KEY (`actor_id`) REFERENCES `mes_users` (`id`)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `mes_auth_sessions` (
+  `session_id` VARCHAR(64) NOT NULL,
+  `user_code` VARCHAR(32) NOT NULL,
+  `refresh_jti` VARCHAR(64) NOT NULL,
+  `status` ENUM('active', 'revoked') NOT NULL DEFAULT 'active',
+  `user_agent` VARCHAR(255) DEFAULT NULL,
+  `ip_address` VARCHAR(64) DEFAULT NULL,
+  `created_at` DATETIME NOT NULL,
+  `last_seen_at` DATETIME NOT NULL,
+  `access_expires_at` DATETIME NOT NULL,
+  `refresh_expires_at` DATETIME NOT NULL,
+  `rotation_count` INT NOT NULL DEFAULT 0,
+  `revoked_at` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`session_id`),
+  KEY `idx_mes_auth_sessions_user_code` (`user_code`),
+  KEY `idx_mes_auth_sessions_status` (`status`),
+  KEY `idx_mes_auth_sessions_refresh_jti` (`refresh_jti`)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `mes_integration_sync_logs` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `integration_key` VARCHAR(64) NOT NULL,
+  `source_mode` VARCHAR(32) NOT NULL,
+  `status` ENUM('success', 'failed') NOT NULL,
+  `actor_user_code` VARCHAR(32) DEFAULT NULL,
+  `snapshot_at` DATETIME DEFAULT NULL,
+  `summary_json` JSON DEFAULT NULL,
+  `error_message` VARCHAR(500) DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_mes_integration_sync_logs_key` (`integration_key`),
+  KEY `idx_mes_integration_sync_logs_status` (`status`)
 ) ENGINE=InnoDB;

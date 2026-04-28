@@ -1,7 +1,18 @@
+require("dotenv").config();
+
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { handleApiRequest } = require("./backend/router");
+const { startErpSyncScheduler } = require("./backend/erp-sync-scheduler");
+const { startWmsSyncScheduler } = require("./backend/wms-sync-scheduler");
+const {
+  applyResponseSecurityHeaders,
+  generateRequestId
+} = require("./backend/http-security");
+const { REQUEST_LOG_ENABLED, validateRuntimeSecurity } = require("./backend/runtime-config");
+
+validateRuntimeSecurity();
 
 const port = Number(process.argv[2] || process.env.PORT || 3000);
 const projectRoot = path.resolve(__dirname, "..");
@@ -22,6 +33,29 @@ const mimeTypes = {
 };
 
 const server = http.createServer(async (request, response) => {
+  const requestId = generateRequestId();
+  const startedAt = Date.now();
+  const requestPath = new URL(request.url || "/", "http://localhost").pathname;
+
+  applyResponseSecurityHeaders(response, requestId);
+
+  response.once("finish", () => {
+    if (!REQUEST_LOG_ENABLED) {
+      return;
+    }
+
+    console.log(
+      JSON.stringify({
+        type: "http_access",
+        requestId,
+        method: request.method || "GET",
+        path: requestPath,
+        statusCode: response.statusCode,
+        durationMs: Date.now() - startedAt
+      })
+    );
+  });
+
   const apiHandled = await handleApiRequest(request, response);
   if (apiHandled) {
     return;
@@ -78,4 +112,6 @@ const server = http.createServer(async (request, response) => {
 
 server.listen(port, () => {
   console.log(`MES server is running at http://localhost:${port}`);
+  startErpSyncScheduler();
+  startWmsSyncScheduler();
 });

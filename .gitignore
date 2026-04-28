@@ -3,3 +3,5 @@ dist
 server/data/runtime-store.json
 npm-debug.log*
 dev-server.log
+.env
+backups/

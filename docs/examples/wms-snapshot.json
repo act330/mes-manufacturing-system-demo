@@ -1,0 +1,56 @@
+{
+  "metadata": {
+    "sourceSystem": "WMS-DEMO",
+    "snapshotAt": "2026-04-23T13:30:00+08:00"
+  },
+  "inventoryItems": [
+    {
+      "materialCode": "MAT-WMS-001",
+      "materialName": "高压母排组件",
+      "factoryCode": "FAC-001",
+      "locationCode": "WH-A-01-01",
+      "onHandQty": 1200,
+      "safetyQty": 300,
+      "turnoverDays": 8,
+      "status": "safe"
+    },
+    {
+      "materialCode": "MAT-WMS-002",
+      "materialName": "驱动板散热器",
+      "factoryCode": "FAC-002",
+      "locationCode": "WH-B-02-03",
+      "onHandQty": 180,
+      "safetyQty": 250,
+      "turnoverDays": 5,
+      "status": "warning"
+    }
+  ],
+  "movements": [
+    {
+      "transactionCode": "WMS-TXN-1001",
+      "materialCode": "MAT-WMS-001",
+      "factoryCode": "FAC-001",
+      "locationCode": "WH-A-01-01",
+      "direction": "inbound",
+      "qty": 400,
+      "refType": "receipt",
+      "refCode": "ASN-20260423-001",
+      "sourceDocNo": "PO-90001",
+      "sourceSystem": "WMS",
+      "occurredAt": "2026-04-23 09:10:00"
+    },
+    {
+      "transactionCode": "WMS-TXN-1002",
+      "materialCode": "MAT-WMS-002",
+      "factoryCode": "FAC-002",
+      "locationCode": "WH-B-02-03",
+      "direction": "outbound",
+      "qty": 60,
+      "refType": "issue",
+      "refCode": "ISS-20260423-011",
+      "sourceDocNo": "WO-260418-003",
+      "sourceSystem": "WMS",
+      "occurredAt": "2026-04-23 10:30:00"
+    }
+  ]
+}

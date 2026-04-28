@@ -221,6 +221,14 @@ export const useMesStore = defineStore("mes", {
       this.lastAuthFailure = "";
     },
     persistAuth() {
+      if (!isStaticDemoMode()) {
+        localStorage.removeItem(STORAGE_KEYS.user);
+        localStorage.removeItem(STORAGE_KEYS.token);
+        localStorage.setItem(STORAGE_KEYS.remember, this.remember ? "1" : "0");
+        this.refreshAccessibleMenuCache();
+        return;
+      }
+
       if (this.user && this.remember) {
         localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(this.user));
         localStorage.setItem(STORAGE_KEYS.token, this.authToken || "");
@@ -333,12 +341,12 @@ export const useMesStore = defineStore("mes", {
       this.setToast(message);
     },
     async hydrateSession() {
-      if (!this.authToken) {
-        this.lastAuthFailure = "";
-        return false;
-      }
-
       if (isStaticDemoMode()) {
+        if (!this.authToken) {
+          this.lastAuthFailure = "";
+          return false;
+        }
+
         const payload = demoHydrateSession(this.authToken, this.dataState);
         if (!payload) {
           this.lastAuthFailure = "expired";
@@ -392,7 +400,7 @@ export const useMesStore = defineStore("mes", {
           skipAuthRedirect: true
         });
 
-        this.authToken = data.token;
+        this.authToken = "";
         this.applyAuthPayload(data);
         this.setToast(`欢迎回来，${data.user.name}。MES Vue 版本已接入 Router + Pinia + Axios。`);
         return true;
@@ -495,6 +503,10 @@ export const useMesStore = defineStore("mes", {
 });
 
 function loadStoredUser() {
+  if (!isStaticDemoMode()) {
+    return null;
+  }
+
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.user);
     return raw ? JSON.parse(raw) : null;
@@ -504,6 +516,10 @@ function loadStoredUser() {
 }
 
 function loadStoredToken() {
+  if (!isStaticDemoMode()) {
+    return "";
+  }
+
   return localStorage.getItem(STORAGE_KEYS.token) || "";
 }
 

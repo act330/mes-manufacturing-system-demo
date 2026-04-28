@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Static checks
+        run: npm run check
+
+      - name: Automated tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  validate-mysql:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: 123456
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -p123456 --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      MES_DATA_DRIVER: mysql
+      MES_JWT_SECRET: ci-strong-secret-value
+      MES_COOKIE_SECURE: "false"
+      MES_REQUEST_LOG: "false"
+      MES_MYSQL_HOST: 127.0.0.1
+      MES_MYSQL_PORT: 3306
+      MES_MYSQL_DATABASE: mes_core
+      MES_MYSQL_USER: root
+      MES_MYSQL_PASSWORD: 123456
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Initialize MySQL schema and seed
+        run: npm run db:reset
+
+      - name: Smoke test with MySQL
+        run: npm run smoke:mysql

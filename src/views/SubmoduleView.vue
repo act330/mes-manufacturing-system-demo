@@ -159,6 +159,59 @@ const barcodeTemplateFileInput = ref(null);
 const barcodeDirectUploadInput = ref(null);
 const barcodeDirectUploadRowId = ref("");
 
+const SUBMODULE_STORAGE_PREFIX = "mes-submodule";
+
+function buildStorageKey(scope, identifier) {
+  return `${SUBMODULE_STORAGE_PREFIX}:${scope}:${identifier}`;
+}
+
+function readStoredJson(scope, identifier) {
+  try {
+    const raw = localStorage.getItem(buildStorageKey(scope, identifier));
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function writeStoredJson(scope, identifier, value) {
+  localStorage.setItem(buildStorageKey(scope, identifier), JSON.stringify(value));
+}
+
+function getStoredPageRows(routeName, fallbackRows = []) {
+  const stored = readStoredJson("page-rows", routeName);
+  return Array.isArray(stored) ? stored : deepClone(fallbackRows);
+}
+
+function getStoredPanelValues(routeName) {
+  const stored = readStoredJson("panel-values", routeName);
+  return stored && typeof stored === "object" ? stored : {};
+}
+
+function getStoredMenuRows(title, fallbackRows = []) {
+  const stored = readStoredJson("menu-sheet", title);
+  return Array.isArray(stored) ? stored : deepClone(fallbackRows);
+}
+
+function getStoredProcedureBindingRows(processName, fallbackRows = []) {
+  const stored = readStoredJson("procedure-binding", processName);
+  return Array.isArray(stored) ? stored : deepClone(fallbackRows);
+}
+
+function getStoredStationDetailRows(key, fallbackRows = []) {
+  const stored = readStoredJson("station-detail", key);
+  return Array.isArray(stored) ? stored : deepClone(fallbackRows);
+}
+
+function getStoredApprovalDialogState(mode, title, fallbackValue) {
+  const stored = readStoredJson("approval-dialog", `${mode}:${title}`);
+  if (mode === "flow") {
+    return Array.isArray(stored) ? stored : deepClone(fallbackValue);
+  }
+
+  return Array.isArray(stored) ? stored : deepClone(fallbackValue);
+}
+
 const MENU_PERMISSION_TEMPLATE = [
   { key: "menu-user", label: "用户管理", checked: true },
   { key: "menu-factory", label: "工厂管理", checked: false },
@@ -375,7 +428,7 @@ const pageConfig = computed(() => {
 watch(
   pageConfig,
   (config) => {
-    rows.value = deepClone(config.rows || []).map((row) => enrichRowForPage(row));
+    rows.value = getStoredPageRows(String(route.name || ""), config.rows || []).map((row) => enrichRowForPage(row));
     selectedRowKeys.value = [];
     Object.keys(filters).forEach((key) => {
       delete filters[key];
@@ -432,6 +485,7 @@ watch(
         panelForm[field.key] = field.value || "";
       });
     });
+    Object.assign(panelForm, getStoredPanelValues(String(route.name || "")));
 
     const nextPage = Number(route.query.page);
     const nextPageSize = Number(route.query.pageSize);
@@ -929,7 +983,8 @@ function buildGeneratedSubmenuRows(menuName) {
 }
 
 function buildMenuSheetRows(menuName) {
-  return deepClone(SUBMENU_DIALOG_TEMPLATES[menuName] || buildGeneratedSubmenuRows(menuName));
+  const fallbackRows = SUBMENU_DIALOG_TEMPLATES[menuName] || buildGeneratedSubmenuRows(menuName);
+  return getStoredMenuRows(menuName, fallbackRows);
 }
 
 function openMenuSheetDialog(title, sourceRows) {
@@ -995,6 +1050,7 @@ function handleMenuSheetToolbarAction(actionKey) {
       mesStore.setToast(`${menuSheetDialog.title} 子菜单已刷新。`);
       break;
     case "save":
+      writeStoredJson("menu-sheet", menuSheetDialog.title, menuSheetDialog.sourceRows);
       mesStore.setToast(`${menuSheetDialog.title} 菜单配置已保存。`);
       break;
     default:
@@ -1005,13 +1061,80 @@ function handleMenuSheetToolbarAction(actionKey) {
 function handleMenuSheetRowAction(actionKey, row) {
   switch (actionKey) {
     case "edit":
-      mesStore.setToast(`${row.name} 编辑窗口已打开。`);
+      openFloatingActionDialog({
+        title: `编辑${row.name}`,
+        fields: [
+          { key: "name", label: "菜单名称", type: "text", required: true, placeholder: "请输入" },
+          { key: "path", label: "菜单路径", type: "text", required: true, placeholder: "请输入" }
+        ],
+        initialValues: {
+          name: row.name || "",
+          path: row.path || ""
+        },
+        submitLabel: "保存",
+        onSubmit: (values) => {
+          row.name = values.name;
+          row.path = values.path;
+          row.operator = "当前用户";
+          row.updatedAt = currentTimestamp();
+          mesStore.setToast(`${row.name} 已更新。`);
+        }
+      });
       break;
     case "submenu":
       openSubmenuSheet(row);
       break;
     default:
-      mesStore.setToast(`${row.name} 更多操作已打开。`);
+      openFloatingActionDialog({
+        title: `${row.name} 更多操作`,
+        fields: [
+          {
+            key: "actionType",
+            label: "操作类型",
+            type: "select",
+            required: true,
+            options: [
+              { label: "置顶", value: "top" },
+              { label: "复制", value: "copy" },
+              { label: "删除", value: "delete" }
+            ]
+          }
+        ],
+        initialValues: {
+          actionType: "top"
+        },
+        submitLabel: "执行",
+        onSubmit: (values) => {
+          if (values.actionType === "top") {
+            menuSheetDialog.sourceRows = [
+              row,
+              ...menuSheetDialog.sourceRows.filter((item) => item.id !== row.id)
+            ];
+            menuSheetDialog.currentPage = 1;
+            mesStore.setToast(`${row.name} 已置顶。`);
+            return;
+          }
+
+          if (values.actionType === "copy") {
+            menuSheetDialog.sourceRows.unshift({
+              ...deepClone(row),
+              id: `sheet-${Date.now()}`,
+              name: `${row.name}-复制`,
+              path: `${row.path || "/menu"}-copy-${Date.now().toString().slice(-4)}`,
+              operator: "当前用户",
+              updatedAt: currentTimestamp(),
+              createdAt: currentTimestamp()
+            });
+            menuSheetDialog.currentPage = 1;
+            mesStore.setToast(`${row.name} 已复制。`);
+            return;
+          }
+
+          menuSheetDialog.sourceRows = menuSheetDialog.sourceRows.filter((item) => item.id !== row.id);
+          menuSheetDialog.currentPage = Math.min(menuSheetDialog.currentPage, menuSheetPageCount.value);
+          mesStore.setToast(`${row.name} 已删除。`);
+        }
+      });
       break;
   }
 }
@@ -1048,8 +1171,14 @@ function openApprovalGroupDialog(mode, row) {
   approvalGroupDialog.currentPage = 1;
   approvalGroupDialog.pageSize = 10;
   approvalGroupDialog.maximized = false;
-  approvalGroupDialog.flowNodes = mode === "flow" ? buildApprovalFlowNodes(approvalGroupDialog.title) : [];
-  approvalGroupDialog.sourceRows = mode === "table" ? buildApprovalCcRows(approvalGroupDialog.title) : [];
+  approvalGroupDialog.flowNodes =
+    mode === "flow"
+      ? getStoredApprovalDialogState("flow", approvalGroupDialog.title, buildApprovalFlowNodes(approvalGroupDialog.title))
+      : [];
+  approvalGroupDialog.sourceRows =
+    mode === "table"
+      ? getStoredApprovalDialogState("table", approvalGroupDialog.title, buildApprovalCcRows(approvalGroupDialog.title))
+      : [];
 }
 
 function closeApprovalGroupDialog() {
@@ -1068,6 +1197,12 @@ function toggleApprovalGroupMaximize() {
 }
 
 function handleApprovalGroupToolbarAction(actionKey) {
+  if (approvalGroupDialog.mode === "flow" && actionKey === "save") {
+    writeStoredJson("approval-dialog", `flow:${approvalGroupDialog.title}`, approvalGroupDialog.flowNodes);
+    mesStore.setToast(`${approvalGroupDialog.title} 已保存。`);
+    return;
+  }
+
   if (approvalGroupDialog.mode === "flow") {
     if (actionKey === "add") {
       approvalGroupDialog.flowNodes.push({
@@ -1091,11 +1226,16 @@ function handleApprovalGroupToolbarAction(actionKey) {
       mesStore.setToast(`${approvalGroupDialog.title} 抄送人员已新增。`);
       break;
     case "refresh":
-      approvalGroupDialog.sourceRows = buildApprovalCcRows(approvalGroupDialog.title);
+      approvalGroupDialog.sourceRows = getStoredApprovalDialogState("table", approvalGroupDialog.title, buildApprovalCcRows(approvalGroupDialog.title));
       approvalGroupDialog.currentPage = 1;
       mesStore.setToast(`${approvalGroupDialog.title} 抄送人员已刷新。`);
       break;
     case "save":
+      writeStoredJson(
+        "approval-dialog",
+        `${approvalGroupDialog.mode}:${approvalGroupDialog.title}`,
+        approvalGroupDialog.mode === "flow" ? approvalGroupDialog.flowNodes : approvalGroupDialog.sourceRows
+      );
       mesStore.setToast(`${approvalGroupDialog.title} 配置已保存。`);
       break;
     default:
@@ -1175,7 +1315,7 @@ function openStationDetailDialog(row) {
   stationDetailDialog.stationName = "";
   stationDetailDialog.line = sourceRows[0]?.lineName || row.line || "all";
   stationDetailDialog.cell = sourceRows[0]?.cellName || row.cellName || row.name || "all";
-  stationDetailDialog.sourceRows = sourceRows;
+  stationDetailDialog.sourceRows = getStoredStationDetailRows(row.cellName || row.name || stationDetailDialog.title, sourceRows);
   stationDetailDialog.currentPage = 1;
   stationDetailDialog.pageSize = 10;
 }
@@ -1209,12 +1349,13 @@ function refreshStationDetailDialog() {
   const cellName = stationDetailDialog.cell && stationDetailDialog.cell !== "all"
     ? stationDetailDialog.cell
     : stationDetailDialog.sourceRows[0]?.cellName;
-  stationDetailDialog.sourceRows = buildStationDetailRows(cellName || "");
+  stationDetailDialog.sourceRows = getStoredStationDetailRows(cellName || stationDetailDialog.title, buildStationDetailRows(cellName || ""));
   stationDetailDialog.currentPage = 1;
   mesStore.setToast("工位明细已刷新。");
 }
 
 function saveStationDetailDialog() {
+  writeStoredJson("station-detail", stationDetailDialog.cell || stationDetailDialog.title, stationDetailDialog.sourceRows);
   mesStore.setToast("工位配置已保存。");
 }
 
@@ -1291,7 +1432,10 @@ function openProcedureBindingDialog(row) {
   procedureBindingDialog.visible = true;
   procedureBindingDialog.processName = row.processName || row.name;
   procedureBindingDialog.title = `${procedureBindingDialog.processName}工序与工位绑定`;
-  procedureBindingDialog.sourceRows = buildProcedureBindingRows(procedureBindingDialog.processName);
+  procedureBindingDialog.sourceRows = getStoredProcedureBindingRows(
+    procedureBindingDialog.processName,
+    buildProcedureBindingRows(procedureBindingDialog.processName)
+  );
   procedureBindingDialog.currentPage = 1;
   procedureBindingDialog.pageSize = 10;
 }
@@ -1311,6 +1455,20 @@ function previousProcedureBindingPage() {
 
 function nextProcedureBindingPage() {
   procedureBindingDialog.currentPage = Math.min(procedureBindingPageCount.value, procedureBindingDialog.currentPage + 1);
+}
+
+function refreshProcedureBindingDialog() {
+  procedureBindingDialog.sourceRows = getStoredProcedureBindingRows(
+    procedureBindingDialog.processName,
+    buildProcedureBindingRows(procedureBindingDialog.processName)
+  );
+  procedureBindingDialog.currentPage = 1;
+  mesStore.setToast("工位绑定明细已刷新。");
+}
+
+function saveProcedureBindingDialog() {
+  writeStoredJson("procedure-binding", procedureBindingDialog.processName, procedureBindingDialog.sourceRows);
+  mesStore.setToast("工位绑定配置已保存。");
 }
 
 function buildRouteProcessNodes(routeName, processCount = 0) {
@@ -2567,6 +2725,12 @@ function currentTimestamp() {
   return new Date().toISOString().slice(0, 19).replace("T", " ");
 }
 
+function persistCurrentPageState(customMessage = `${pageConfig.value.title} 配置已保存。`) {
+  writeStoredJson("page-rows", String(route.name || ""), rows.value);
+  writeStoredJson("panel-values", String(route.name || ""), deepClone(panelForm));
+  mesStore.setToast(customMessage);
+}
+
 function normalizeExportValue(value) {
   if (value === null || value === undefined) {
     return "";
@@ -3077,6 +3241,51 @@ function handleToolbarAction(action) {
     return;
   }
 
+  if (action.key === "save") {
+    persistCurrentPageState(`${pageConfig.value.title} 已保存。`);
+    return;
+  }
+
+  if (action.key === "confirmPanel") {
+    persistCurrentPageState(`${pageConfig.value.title} 已保存。`);
+    return;
+  }
+
+  if (action.key === "import") {
+    if (pageConfig.value.title === "宸ョ▼BOM") {
+      openBomImportDialog();
+      return;
+    }
+
+    openFloatingActionDialog({
+      title: `${pageConfig.value.title} 导入`,
+      fields: [
+        { key: "fileName", label: "文件名称", type: "text", required: true, placeholder: "请输入 xlsx 文件名" },
+        {
+          key: "importMode",
+          label: "导入模式",
+          type: "select",
+          required: true,
+          options: [
+            { label: "合并导入", value: "merge" },
+            { label: "覆盖导入", value: "replace" }
+          ]
+        }
+      ],
+      initialValues: {
+        importMode: "merge"
+      },
+      submitLabel: "开始导入",
+      onSubmit: (values) => {
+        if (values.importMode === "replace") {
+          rows.value = [];
+        }
+        mesStore.setToast(`${pageConfig.value.title} 已受理 ${values.fileName} 导入任务。`);
+      }
+    });
+    return;
+  }
+
   switch (action.key) {
     case "add": {
       if (pageConfig.value.title === "工程BOM") {
@@ -3087,7 +3296,7 @@ function handleToolbarAction(action) {
       break;
     }
     case "refresh":
-      rows.value = deepClone(pageConfig.value.rows || []).map((row) => enrichRowForPage(row));
+      rows.value = getStoredPageRows(String(route.name || ""), pageConfig.value.rows || []).map((row) => enrichRowForPage(row));
       selectedRowKeys.value = [];
       currentPage.value = 1;
       mesStore.setToast(`${pageConfig.value.title} 已刷新。`);
@@ -3145,6 +3354,14 @@ function handleGroupLink(item) {
     router.push({ name: item.routeName });
     return;
   }
+  openConfirmDialog({
+    title: item.label,
+    message: `${item.label} 当前未配置独立页面，建议补充 routeName 或在此处接入对应业务弹窗。`,
+    confirmText: "知道了",
+    cancelText: "",
+    onConfirm: () => {}
+  });
+  return;
   mesStore.setToast(`${item.label} 功能入口已打开。`);
 }
 
@@ -4311,8 +4528,8 @@ const dictionaryEntryDialogTitle = computed(() =>
           <strong>{{ procedureBindingDialog.title }}</strong>
           <div class="template-toolbar-actions">
             <button class="btn btn-warning btn-sm" type="button" @click="openProcessBindStationForm">绑定工位</button>
-            <button class="btn btn-ghost btn-sm" type="button" @click="procedureBindingDialog.sourceRows = buildProcedureBindingRows(procedureBindingDialog.processName)">刷新</button>
-            <button class="btn btn-ghost btn-sm" type="button" @click="mesStore.setToast('工位绑定配置已保存。')">保存配置</button>
+            <button class="btn btn-ghost btn-sm" type="button" @click="refreshProcedureBindingDialog">刷新</button>
+            <button class="btn btn-ghost btn-sm" type="button" @click="saveProcedureBindingDialog">保存配置</button>
           </div>
         </div>
 

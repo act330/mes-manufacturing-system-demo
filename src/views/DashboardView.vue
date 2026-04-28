@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import LineTrendChart from "../components/charts/LineTrendChart.vue";
@@ -11,6 +12,10 @@ import { exceptionStatusType, priorityType, productionStatusType } from "../util
 const router = useRouter();
 const mesStore = useMesStore();
 const { dashboardSummary, dataState } = storeToRefs(mesStore);
+
+const totalDefectCount = computed(() =>
+  (dataState.value.defectTop || []).reduce((sum, item) => sum + Number(item.value || 0), 0)
+);
 
 function completionRate(item) {
   return Math.round((Number(item.produced || 0) / Number(item.planned || 1)) * 100);
@@ -118,7 +123,7 @@ function navigate(moduleKey) {
             <h3 class="card-title">生产不良 TOP</h3>
             <p class="card-subtitle">按缺陷类型聚合现场异常</p>
           </div>
-          <span class="pill warning">本周共 94 件</span>
+          <span class="pill warning">本周共 {{ totalDefectCount }} 件</span>
         </div>
         <div class="card-body">
           <DefectDonut :items="dataState.defectTop" />

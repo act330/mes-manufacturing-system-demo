@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+.gitignore
+.env
+server/data
+dev-server.log
+tmp-*.json
+tmp-*.log
+docs/screenshots

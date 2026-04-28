@@ -1,0 +1,69 @@
+{
+  "metadata": {
+    "sourceSystem": "ERP-APS-DEMO",
+    "snapshotAt": "2026-04-23T09:00:00+08:00"
+  },
+  "customers": [
+    {
+      "code": "CUS-900",
+      "name": "星航电驱",
+      "level": "A",
+      "region": "华东",
+      "owner": "赵宁"
+    },
+    {
+      "code": "CUS-901",
+      "name": "凌越装备",
+      "level": "B",
+      "region": "华北",
+      "owner": "周岚"
+    }
+  ],
+  "products": [
+    {
+      "code": "PROD-900",
+      "name": "高压控制器总成",
+      "version": "V2.1",
+      "uom": "PCS"
+    },
+    {
+      "code": "PROD-901",
+      "name": "逆变器驱动板",
+      "version": "V1.4",
+      "uom": "PCS"
+    }
+  ],
+  "routes": [
+    {
+      "code": "ROUTE-HV-900",
+      "productCode": "PROD-900",
+      "version": "V2.1",
+      "cycleSeconds": 180,
+      "status": "released",
+      "steps": [
+        { "code": "STEP-9001", "name": "上料", "sequenceNo": 1, "isQualityGate": false },
+        { "code": "STEP-9002", "name": "装配", "sequenceNo": 2, "isQualityGate": false },
+        { "code": "STEP-9003", "name": "FCT", "sequenceNo": 3, "stationCode": "FCT-01", "isQualityGate": true }
+      ]
+    }
+  ],
+  "workOrders": [
+    {
+      "code": "WO-ERP-9001",
+      "factoryCode": "FAC-001",
+      "customerCode": "CUS-900",
+      "productCode": "PROD-900",
+      "routeCode": "ROUTE-HV-900",
+      "lineCode": "LINE-SMT-01",
+      "lineName": "SMT-01",
+      "plannedQty": 600,
+      "producedQty": 0,
+      "passRate": 100,
+      "priority": "high",
+      "status": "released",
+      "managerName": "赵宁",
+      "scheduledStartAt": "2026-04-24 08:00:00",
+      "scheduledEndAt": "2026-04-24 18:00:00"
+    }
+  ]
+}

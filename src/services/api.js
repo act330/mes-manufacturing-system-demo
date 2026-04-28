@@ -2,15 +2,21 @@ import axios from "axios";
 import { STORAGE_KEYS } from "../utils/mes-utils";
 
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL || "/api";
+const staticDemoMode = import.meta.env.VITE_STATIC_DEMO === "true";
 
 export const apiClient = axios.create({
   baseURL: apiBaseURL,
+  withCredentials: true,
   headers: {
     Accept: "application/json"
   }
 });
 
 apiClient.interceptors.request.use((config) => {
+  if (!staticDemoMode) {
+    return config;
+  }
+
   const token = localStorage.getItem(STORAGE_KEYS.token);
 
   if (token) {
@@ -22,6 +28,21 @@ apiClient.interceptors.request.use((config) => {
 });
 
 let interceptorsReady = false;
+let refreshPromise = null;
+
+async function refreshAuthSession() {
+  if (!refreshPromise) {
+    refreshPromise = apiClient.post("/auth/refresh", null, {
+      skipAuthRedirect: true,
+      skipAuthRefresh: true,
+      skipPermissionRedirect: true
+    }).finally(() => {
+      refreshPromise = null;
+    });
+  }
+
+  return refreshPromise;
+}
 
 export function setupApiInterceptors({ router, resolveAuthStore }) {
   if (interceptorsReady) {
@@ -35,6 +56,21 @@ export function setupApiInterceptors({ router, resolveAuthStore }) {
       const config = error?.config || {};
       const authStore = typeof resolveAuthStore === "function" ? resolveAuthStore() : null;
       const currentRoute = router?.currentRoute?.value;
+
+      if (
+        status === 401 &&
+        !config.skipAuthRefresh &&
+        !config._retry &&
+        !String(config.url || "").includes("/auth/refresh") &&
+        !String(config.url || "").includes("/auth/login")
+      ) {
+        try {
+          await refreshAuthSession();
+          config._retry = true;
+          return apiClient(config);
+        } catch (refreshError) {
+        }
+      }
 
       if (status === 401 && !config.skipAuthRedirect) {
         authStore?.handleUnauthorized(getApiErrorMessage(error, "登录已失效，请重新登录。"));

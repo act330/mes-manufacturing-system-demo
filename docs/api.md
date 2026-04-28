@@ -6,9 +6,16 @@
 
 - `POST /api/auth/login`
 - `GET /api/auth/me`
+- `POST /api/auth/refresh`
 - `POST /api/auth/logout`
+- `POST /api/auth/logout-all`
+- `GET /api/auth/sso/providers`
+- `GET /api/auth/sso/start`
+- `GET /api/auth/sso/callback`
 
-登录成功后返回 `token`，前端通过 `Authorization: Bearer <token>` 传递会话。
+登录成功后会下发 `HttpOnly Cookie`，默认包含短期 `access` 会话和长期 `refresh` 会话。
+`/api/auth/me` 与 `/api/bootstrap` 返回的业务数据会按账号权限和工厂范围过滤，不再返回全量演示数据。
+`/api/auth/refresh` 用于轮换刷新登录态，`/api/auth/logout-all` 用于撤销当前账号的全部活跃会话。
 
 ### 登录请求
 
@@ -45,7 +52,27 @@
 }
 ```
 
+### SSO 说明
+
+当前已预留 SSO 接口与环境变量：
+
+- `MES_SSO_ENABLED`
+- `MES_SSO_PROVIDER_KEY`
+- `MES_SSO_PROVIDER_LABEL`
+- `MES_SSO_AUTH_URL`
+- `MES_SSO_CLIENT_ID`
+- `MES_SSO_SCOPE`
+- `MES_SSO_CALLBACK_URL`
+
+在未配置完成前：
+
+- `GET /api/auth/sso/providers` 会返回预留提供方状态
+- `GET /api/auth/sso/start` 会返回 `sso_not_configured`
+- `GET /api/auth/sso/callback` 会返回 `sso_not_implemented`
+
 ## 核心业务接口
+
+当 `MES_DATA_DRIVER=mysql` 时，以下接口会直接读取或更新 MySQL 中的真实业务数据：客户、工艺路线、条码规则、工单、设备、库存、异常、追溯、审批、系统设置；`GET /api/dashboard` 的不良 TOP 和趋势数据会基于 `mes_work_order_logs` 聚合，`POST /api/barcodes/issue` 会写入 `mes_barcode_serials`。
 
 - `GET /api/bootstrap`
   返回前端首页和模块所需的全部基础数据。

@@ -1,0 +1,15 @@
+{
+  "source": "payload",
+  "payload": {
+    "printerCode": "PRN-001",
+    "printerName": "ZT410-A",
+    "ruleCode": "barcode-sn",
+    "copies": 1,
+    "items": [
+      {
+        "barcodeValue": "SN-260418-SMT01-0086",
+        "workOrderId": "WO-260418-002"
+      }
+    ]
+  }
+}

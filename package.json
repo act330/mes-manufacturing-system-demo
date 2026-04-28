@@ -10,10 +10,21 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
     "start": "node server/index.js 3000",
-    "check": "node --check server/index.js && node --check src/main.js && node --check server/backend/router.js && node --check server/backend/store.js && node --check server/backend/mes-seed.js"
+    "start:prod": "npm run build && node server/index.js 3000",
+    "test": "node --test tests/*.test.mjs",
+    "db:init": "node scripts/db-init.js",
+    "db:reset": "node scripts/db-init.js --reset",
+    "db:backup": "node scripts/db-backup.js",
+    "db:restore": "node scripts/db-restore.js",
+    "smoke:mysql": "node scripts/mysql-smoke.js",
+    "setup:mysql": "node scripts/mysql-init-and-smoke.js",
+    "setup:mysql:reset": "node scripts/mysql-init-and-smoke.js --reset",
+    "check": "node --check server/index.js && node --check src/main.js && node --check server/backend/router.js && node --check server/backend/store.js && node --check server/backend/mes-seed.js && node --check server/backend/mysql-auth.js && node --check server/backend/data-scope.js && node --check server/backend/mysql-mes.js && node --check server/backend/runtime-config.js && node --check server/backend/http-security.js && node --check server/backend/integration-status.js && node --check server/backend/integration-erp.js && node --check server/backend/erp-sync-scheduler.js && node --check server/backend/integration-wms.js && node --check server/backend/wms-sync-scheduler.js && node --check server/backend/integration-printer.js && node --check server/backend/sso-config.js && node --check scripts/db-env.js && node --check scripts/db-init.js && node --check scripts/db-backup.js && node --check scripts/db-restore.js && node --check scripts/mysql-smoke.js && node --check scripts/mysql-init-and-smoke.js"
   },
   "dependencies": {
     "axios": "^1.8.4",
+    "dotenv": "^17.4.2",
+    "mysql2": "^3.22.2",
     "pinia": "^3.0.3",
     "vue": "^3.5.13",
     "vue-router": "^4.5.1",

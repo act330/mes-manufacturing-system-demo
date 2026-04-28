@@ -1,9 +1,15 @@
 <script setup>
+import { computed } from "vue";
 import { storeToRefs } from "pinia";
 import { useMesStore } from "../stores/mes";
 
 const mesStore = useMesStore();
 const { dataState } = storeToRefs(mesStore);
+
+const currentMonthTrend = computed(() => {
+  const items = dataState.value.monthlyTrend || [];
+  return items[items.length - 1] || null;
+});
 </script>
 
 <template>
@@ -11,11 +17,11 @@ const { dataState } = storeToRefs(mesStore);
     <div class="kpi-grid">
       <div class="kpi-tile">
         <span>本月产量</span>
-        <strong>12.9 万件</strong>
+        <strong>{{ currentMonthTrend ? `${currentMonthTrend.output} 万件` : "--" }}</strong>
       </div>
       <div class="kpi-tile">
         <span>本月良率</span>
-        <strong>99.4%</strong>
+        <strong>{{ currentMonthTrend ? `${currentMonthTrend.quality}%` : "--" }}</strong>
       </div>
       <div class="kpi-tile">
         <span>异常闭环率</span>

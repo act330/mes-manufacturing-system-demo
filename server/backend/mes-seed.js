@@ -354,24 +354,24 @@ const seedData = {
     { name: "其他", value: 9, color: "#7b8ba3" }
   ],
   exceptions: [
-    { id: "EX-001", type: "设备停机", station: "SMT-01/贴片机 2", owner: "设备部-马俊", status: "待指派", time: "2026-04-18 12:42" },
-    { id: "EX-002", type: "来料不良", station: "IQC-电子料", owner: "质量部-韩梅", status: "处理中", time: "2026-04-18 11:58" },
-    { id: "EX-003", type: "工艺偏差", station: "ASSY-03/接线", owner: "工艺部-吴涛", status: "已闭环", time: "2026-04-18 10:16" }
+    { id: "EX-001", type: "设备停机", station: "SMT-01/贴片机 2", owner: "设备部-马俊", status: "待指派", time: "2026-04-18 12:42", factoryCode: "FAC-001" },
+    { id: "EX-002", type: "来料不良", station: "IQC-电子料", owner: "质量部-韩梅", status: "处理中", time: "2026-04-18 11:58", factoryCode: "FAC-003" },
+    { id: "EX-003", type: "工艺偏差", station: "ASSY-03/接线", owner: "工艺部-吴涛", status: "已闭环", time: "2026-04-18 10:16", factoryCode: "FAC-002" }
   ],
   equipment: [
-    { id: "EQ-1001", name: "西门子 SMT 贴片机", code: "EQ-1001", area: "SMT-01", oee: 93.1, runtime: "17.2 h", alarm: 1, status: "运行中", maintainer: "马俊" },
-    { id: "EQ-1002", name: "回流焊炉", code: "EQ-1002", area: "SMT-01", oee: 89.6, runtime: "14.8 h", alarm: 0, status: "待保养", maintainer: "韩雷" },
-    { id: "EQ-1003", name: "AOI 检测仪", code: "EQ-1003", area: "SMT-02", oee: 95.4, runtime: "18.5 h", alarm: 0, status: "运行中", maintainer: "陈飞" },
-    { id: "EQ-2008", name: "FCT 测试台", code: "EQ-2008", area: "FCT-01", oee: 86.3, runtime: "11.1 h", alarm: 2, status: "告警中", maintainer: "王广" },
-    { id: "EQ-3012", name: "老化架", code: "EQ-3012", area: "AGING", oee: 91.8, runtime: "19.6 h", alarm: 0, status: "运行中", maintainer: "邵峰" },
-    { id: "EQ-4015", name: "激光打标机", code: "EQ-4015", area: "PACK-01", oee: 88.1, runtime: "13.2 h", alarm: 1, status: "换料中", maintainer: "秦宇" }
+    { id: "EQ-1001", name: "西门子 SMT 贴片机", code: "EQ-1001", area: "SMT-01", oee: 93.1, runtime: "17.2 h", alarm: 1, status: "运行中", maintainer: "马俊", factoryCode: "FAC-001" },
+    { id: "EQ-1002", name: "回流焊炉", code: "EQ-1002", area: "SMT-01", oee: 89.6, runtime: "14.8 h", alarm: 0, status: "待保养", maintainer: "韩雷", factoryCode: "FAC-001" },
+    { id: "EQ-1003", name: "AOI 检测仪", code: "EQ-1003", area: "SMT-02", oee: 95.4, runtime: "18.5 h", alarm: 0, status: "运行中", maintainer: "陈飞", factoryCode: "FAC-001" },
+    { id: "EQ-2008", name: "FCT 测试台", code: "EQ-2008", area: "FCT-01", oee: 86.3, runtime: "11.1 h", alarm: 2, status: "告警中", maintainer: "王广", factoryCode: "FAC-001" },
+    { id: "EQ-3012", name: "老化架", code: "EQ-3012", area: "AGING", oee: 91.8, runtime: "19.6 h", alarm: 0, status: "运行中", maintainer: "邵峰", factoryCode: "FAC-002" },
+    { id: "EQ-4015", name: "激光打标机", code: "EQ-4015", area: "PACK-01", oee: 88.1, runtime: "13.2 h", alarm: 1, status: "换料中", maintainer: "秦宇", factoryCode: "FAC-002" }
   ],
   inventory: [
-    { id: "MAT-001", material: "STM32 控制芯片", code: "MAT-001", onHand: 8200, safety: 6500, location: "A-01-03", turnover: "11 天", status: "安全" },
-    { id: "MAT-017", material: "铝电解电容 470uF", code: "MAT-017", onHand: 2300, safety: 3000, location: "A-03-08", turnover: "5 天", status: "预警" },
-    { id: "MAT-091", material: "逆变器外壳", code: "MAT-091", onHand: 780, safety: 1000, location: "B-01-02", turnover: "8 天", status: "预警" },
-    { id: "MAT-112", material: "连接线束 A12", code: "MAT-112", onHand: 1560, safety: 900, location: "C-02-04", turnover: "15 天", status: "安全" },
-    { id: "MAT-210", material: "成品包装箱", code: "MAT-210", onHand: 410, safety: 380, location: "F-01-01", turnover: "18 天", status: "安全" }
+    { id: "MAT-001", material: "STM32 控制芯片", code: "MAT-001", onHand: 8200, safety: 6500, location: "A-01-03", turnover: "11 天", status: "安全", factoryCode: "FAC-001" },
+    { id: "MAT-017", material: "铝电解电容 470uF", code: "MAT-017", onHand: 2300, safety: 3000, location: "A-03-08", turnover: "5 天", status: "预警", factoryCode: "FAC-001" },
+    { id: "MAT-091", material: "逆变器外壳", code: "MAT-091", onHand: 780, safety: 1000, location: "B-01-02", turnover: "8 天", status: "预警", factoryCode: "FAC-002" },
+    { id: "MAT-112", material: "连接线束 A12", code: "MAT-112", onHand: 1560, safety: 900, location: "C-02-04", turnover: "15 天", status: "安全", factoryCode: "FAC-002" },
+    { id: "MAT-210", material: "成品包装箱", code: "MAT-210", onHand: 410, safety: 380, location: "F-01-01", turnover: "18 天", status: "安全", factoryCode: "FAC-001" }
   ],
   traceLots: [
     {
@@ -379,6 +379,7 @@ const seedData = {
       keyword: "LOT-240418-03",
       product: "烧录-FCT 控制板",
       orderId: "WO-260418-001",
+      factoryCode: "FAC-001",
       qty: 320,
       station: "FCT-01",
       result: "已放行",
@@ -395,6 +396,7 @@ const seedData = {
       keyword: "SN-260418-SMT01-0086",
       product: "逆变器主板",
       orderId: "WO-260418-002",
+      factoryCode: "FAC-001",
       qty: 1,
       station: "AOI-02",
       result: "待复判",
@@ -414,6 +416,7 @@ const seedData = {
       dept: "生产部",
       reason: "客户追加 200 台，申请将 WO-260418-001 计划数调整至 1400。",
       status: "待审批",
+      factoryCode: "FAC-001",
       time: "2026-04-18 11:42"
     },
     {
@@ -423,6 +426,7 @@ const seedData = {
       dept: "设备部",
       reason: "回流焊炉当前满载运行，申请保养延期至 4 月 20 日夜班。",
       status: "待审批",
+      factoryCode: "FAC-001",
       time: "2026-04-18 10:26"
     },
     {
@@ -432,6 +436,7 @@ const seedData = {
       dept: "质量部",
       reason: "连接器外观轻微色差，经客户确认不影响功能，申请让步接收。",
       status: "已通过",
+      factoryCode: "FAC-003",
       time: "2026-04-18 09:10"
     }
   ],

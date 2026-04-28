@@ -95,12 +95,117 @@ npm run build
 npm start
 ```
 
+环境变量示例：
+
+```powershell
+Copy-Item .env.example .env
+```
+
+生产环境模板：
+
+```powershell
+Copy-Item .env.production.example .env
+```
+
+认证会话说明：
+
+- 登录后默认使用 `HttpOnly Cookie`
+- 支持 `access + refresh` 双会话
+- 支持 `logout-all`
+- 已预留 SSO 接口和环境变量
+
+正式启动：
+
+```powershell
+npm run start:prod
+```
+
+自动化测试：
+
+```powershell
+npm test
+```
+
 ## 演示账号
 
 - `admin / 123456 / FAC-001`
 - `planner / 123456 / FAC-002`
 - `quality / 123456 / FAC-003`
 - `operator / 123456 / FAC-001`
+
+## P0 进展
+
+当前仓库已经补上以下企业化基础能力：
+
+- 后端接口返回的数据会按角色权限和工厂范围收口，不再对普通账号返回全量业务数据
+- 审计日志会持久化到本地运行时数据；启用 MySQL 后可同步写入 `mes_audit_logs`
+- 后端新增 MySQL 背板开关，可用于接管账号、角色、权限和审计链路
+- `workOrders`、`traceLots`、`approvals`、`settings` 已支持从 MySQL 真实读取；对应审批和系统开关操作也可直接回写数据库
+- `customers`、`processRoutes`、`barcodeRules` 已支持从 MySQL 读取；条码签发可直接写入 `mes_barcode_serials`
+- `equipment`、`inventory`、`exceptions` 已支持从 MySQL 读取；`defectTop` 已改为基于 `mes_work_order_logs` 聚合输出
+- `weeklyOutput`、`monthlyTrend` 已改为基于 `mes_work_order_logs(event_type=production_report)` 聚合输出，不再依赖静态数组或工单表临时推导
+
+启用 MySQL 模式时：
+
+1. 先执行 [`database/mysql_schema.sql`](database/mysql_schema.sql)
+2. 再执行 [`database/mysql_seed.sql`](database/mysql_seed.sql)
+3. 将 `.env` 中的 `MES_DATA_DRIVER` 设置为 `mysql`
+4. 配置 `MES_MYSQL_URL` 或 `MES_MYSQL_HOST`/`MES_MYSQL_DATABASE`/`MES_MYSQL_USER`
+
+常用命令：
+
+```powershell
+# 初始化数据库（库已存在时会跳过重复 seed）
+npm run db:init
+
+# 重建数据库并重新导入 schema + seed
+npm run db:reset
+
+# 启动临时服务并做 MySQL 冒烟验证
+npm run smoke:mysql
+
+# 一键初始化并做冒烟验证
+npm run setup:mysql
+
+# 一键重建数据库并做冒烟验证
+npm run setup:mysql:reset
+
+# 导出数据库备份
+npm run db:backup
+
+# 导入数据库备份
+npm run db:restore -- --input=backups/your-backup.sql
+```
+
+说明：当前阶段已经完成看板与核心业务数据的 MySQL 化；后续可以继续把 ERP、WMS、设备采集与更多执行明细逐步替换到真实 DAO 层。
+
+## Docker
+
+仓库已提供 [`Dockerfile`](Dockerfile) 和 [`docker-compose.yml`](docker-compose.yml)。
+
+启动方式：
+
+```powershell
+docker compose up --build
+```
+
+默认行为：
+
+- `mysql` 服务会自动初始化 `mes_core`
+- 会自动执行 [`database/mysql_schema.sql`](database/mysql_schema.sql)
+- 会自动执行 [`database/mysql_seed.sql`](database/mysql_seed.sql)
+- `app` 服务会以 `MES_DATA_DRIVER=mysql` 连接容器内 MySQL
+
+默认访问地址：
+
+- Web/API：`http://localhost:3000`
+- MySQL（宿主机调试端口）：`127.0.0.1:3307`
+
+## 文档
+
+- [部署说明](docs/deployment.md)
+- [上线检查清单](docs/go-live-checklist.md)
+- [外部集成说明](docs/integrations.md)
 
 ## GitHub Pages 部署说明
 
